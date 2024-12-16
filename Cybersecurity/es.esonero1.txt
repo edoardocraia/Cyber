@@ -1,0 +1,58 @@
+Durante una verifica di routine, Maverick scopre che Filippo è riuscito a ottenere i privilegi di
+amministratore e quindi esiste la possibilità che abbia alterato alcune impostazioni del sistema.
+Aiuta Maverick a capire come Filippo sia riuscito nel suo intento e a impedire che un evento
+simile possa nuovamente accadere.
+
+
+#!/bin/bash
+
+# Percorso per il log dell'analisi
+LOG_FILE="analisi_sicurezza.log"
+> $LOG_FILE
+
+echo "Inizio dell'analisi di sicurezza..." | tee -a $LOG_FILE
+
+# 1. Verifica utenti e privilegi
+echo -e "\n1. Utenti con privilegi amministrativi:" | tee -a $LOG_FILE
+grep 'sudo' /etc/group | tee -a $LOG_FILE
+grep 'wheel' /etc/group | tee -a $LOG_FILE
+
+echo -e "\nUtenti con shell attive e password impostate:" | tee -a $LOG_FILE
+awk -F: '$7 !~ /nologin/ && $2 !~ /^!/' /etc/passwd | tee -a $LOG_FILE
+
+# 2. Verifica file critici
+echo -e "\n2. Verifica file critici:" | tee -a $LOG_FILE
+ls -l /etc/passwd /etc/shadow /etc/sudoers | tee -a $LOG_FILE
+echo "Modifiche recenti ai file critici:" | tee -a $LOG_FILE
+find /etc -type f \( -name "passwd" -o -name "shadow" -o -name "sudoers" \) -mtime -7 -ls | tee -a $LOG_FILE
+
+# 3. Controllo dei log
+echo -e "\n3. Controllo log di sistema:" | tee -a $LOG_FILE
+echo "Ultimi accessi:" | tee -a $LOG_FILE
+last | head -10 | tee -a $LOG_FILE
+echo "Log sudo:" | tee -a $LOG_FILE
+grep -i 'sudo' /var/log/auth.log | tail -20 | tee -a $LOG_FILE
+
+# 4. Processi sospetti
+echo -e "\n4. Verifica processi attivi:" | tee -a $LOG_FILE
+ps aux | grep -E "(sudo|root)" | grep -v "grep" | tee -a $LOG_FILE
+
+# 5. Prevenzione
+echo -e "\n5. Raccomandazioni per la prevenzione:" | tee -a $LOG_FILE
+echo "1. Cambia tutte le password degli utenti con privilegi." | tee -a $LOG_FILE
+echo "2. Verifica l'integrità dei file critici usando uno strumento come 'tripwire'." | tee -a $LOG_FILE
+echo "3. Configura un sistema di monitoraggio dei log come 'auditd'." | tee -a $LOG_FILE
+echo "4. Usa firewall e limiti l'accesso SSH solo da IP autorizzati." | tee -a $LOG_FILE
+
+echo -e "\nAnalisi completata. Risultati salvati in $LOG_FILE"
+
+
+
+ESECUZIONE
+Salva lo script in un file, ad esempio analisi_sicurezza.sh.
+
+Rendi lo script eseguibile:
+chmod +x analisi_sicurezza.sh
+
+Eseguilo come root per garantire l'accesso a tutti i file di sistema:
+sudo ./analisi_sicurezza.sh

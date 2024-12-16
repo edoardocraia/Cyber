@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Invalida le password per forzare il cambio al prossimo login
+for user in $(awk -F: '{ if ($3 >= 1000 && $3 != 65534) print $1 }' /etc/passwd); do
+    passwd -e $user
+done
+
+# Protegge il file di autenticazione
+AUTH_FILE="/path/to/authentication/file"
+[ -e "$AUTH_FILE" ] && chown root:root "$AUTH_FILE" && chmod 600 "$AUTH_FILE"
+
+# Configura audit per monitorare l'accesso al file di autenticazione
+auditctl -w "$AUTH_FILE" -p rwa -k auth_file_access

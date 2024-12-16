@@ -1,0 +1,41 @@
+Nella penombra dei laboratori informatici dell'accademia Top Gun, il Capitano Maverick si
+trova di fronte a una nuova, inquietante sfida. Un lestofante, con abilità da hacker, ha inserito
+una backdoor nel sistema, una minaccia nascosta che potrebbe consentirgli di ottenere
+privilegi amministrativi senza l'ausilio del comando sudo, bypassando tutte le misure di
+sicurezza precedentemente stabilite.
+Maverick scopre che, indipendentemente dall'account che il lestofante utilizzi per infiltrarsi nel
+sistema, riesce sempre a eseguire comandi con i privilegi da amministratore.
+Una volta identificata la backdoor, Maverick non elimina la minaccia e lascia te, senza ulteriori
+indizi, a scoprire la vulnerabilità.
+
+#!/bin/bash
+
+LOG_FILE="backdoor_analysis.log"
+> $LOG_FILE
+
+echo "Inizio analisi sistema per individuare backdoor..." | tee -a $LOG_FILE
+
+# 1. Processi root sospetti
+echo -e "\n1. Processi root sospetti:" | tee -a $LOG_FILE
+ps aux | grep root | tee -a $LOG_FILE
+
+# 2. Porte aperte
+echo -e "\n2. Porte aperte sospette:" | tee -a $LOG_FILE
+ss -tuln | tee -a $LOG_FILE
+
+# 3. File SUID
+echo -e "\n3. File SUID sospetti:" | tee -a $LOG_FILE
+find / -perm -4000 2>/dev/null | tee -a $LOG_FILE
+
+# 4. Cron job
+echo -e "\n4. Cron job configurati:" | tee -a $LOG_FILE
+crontab -l 2>/dev/null | tee -a $LOG_FILE
+cat /etc/crontab | tee -a $LOG_FILE
+ls /etc/cron.* | tee -a $LOG_FILE
+
+# 5. Configurazioni shell
+echo -e "\n5. File di configurazione della shell:" | tee -a $LOG_FILE
+cat ~/.bashrc | tee -a $LOG_FILE
+cat ~/.profile | tee -a $LOG_FILE
+
+echo -e "\nAnalisi completata. Controlla $LOG_FILE per ulteriori dettagli."

@@ -1,0 +1,67 @@
+In una riunione improvvisata nel laboratorio informatico di Top Gun, il Capitano Maverick,
+circondato da schermi lampeggianti e cavi di rete, decide di introdurre una politica per
+scoraggiare eventuali intrusi informatici. Con un sorriso malizioso, Maverick chiede a te, il suo
+aiutante preferito, di programmare una patch che limita ogni utente della piattaforma ad un
+solo accesso concorrente. Inoltre, per fare uno scherzo al suo caro amico Lorenzo, ti chiede di
+impedirgli di accedere via SSH al server, obbligandolo a venire all'Accademia.
+
+
+#!/bin/bash
+
+LOG_FILE="configura_accesso.log"
+> $LOG_FILE
+
+echo "Inizio configurazione delle politiche di accesso" | tee -a $LOG_FILE
+
+# 1. Limitare gli accessi concorrenti
+echo -e "\n1. Limitazione degli accessi concorrenti a un solo login per utente:" | tee -a $LOG_FILE
+
+LIMITS_FILE="/etc/security/limits.conf"
+if ! grep -q "\* - maxlogins 1" $LIMITS_FILE; then
+    echo "* - maxlogins 1" >> $LIMITS_FILE
+    echo "Limite aggiunto a $LIMITS_FILE: ogni utente può avere un solo login concorrente." | tee -a $LOG_FILE
+else
+    echo "Il limite è già configurato in $LIMITS_FILE." | tee -a $LOG_FILE
+fi
+
+PAM_SSHD_FILE="/etc/pam.d/sshd"
+if ! grep -q "pam_limits.so" $PAM_SSHD_FILE; then
+    echo "session    required     pam_limits.so" >> $PAM_SSHD_FILE
+    echo "Abilitato pam_limits.so in $PAM_SSHD_FILE per applicare le restrizioni di accesso." | tee -a $LOG_FILE
+else
+    echo "pam_limits.so è già abilitato in $PAM_SSHD_FILE." | tee -a $LOG_FILE
+fi
+
+# 2. Bloccare l'accesso SSH a Lorenzo
+echo -e "\n2. Bloccare l'accesso SSH a Lorenzo:" | tee -a $LOG_FILE
+
+SSHD_CONFIG="/etc/ssh/sshd_config"
+if ! grep -q "DenyUsers lorenzo" $SSHD_CONFIG; then
+    echo "DenyUsers lorenzo" >> $SSHD_CONFIG
+    echo "Aggiunto Lorenzo alla lista di utenti bloccati in $SSHD_CONFIG." | tee -a $LOG_FILE
+else
+    echo "Lorenzo è già bloccato in $SSHD_CONFIG." | tee -a $LOG_FILE
+fi
+
+# 3. Riavviare il servizio SSH
+echo -e "\n3. Riavvio del servizio SSH per applicare le modifiche:" | tee -a $LOG_FILE
+systemctl restart sshd
+if [ $? -eq 0 ]; then
+    echo "Servizio SSH riavviato con successo." | tee -a $LOG_FILE
+else
+    echo "Errore durante il riavvio del servizio SSH." | tee -a $LOG_FILE
+fi
+
+echo -e "\nConfigurazione completata. Dettagli salvati in $LOG_FILE."
+
+
+
+
+ESECUZIONE
+Salva lo script come configura_politiche_accesso.sh.
+
+Rendi il file eseguibile:
+chmod +x configura_politiche_accesso.sh
+
+Eseguilo come root:
+sudo ./configura_politiche_accesso.sh

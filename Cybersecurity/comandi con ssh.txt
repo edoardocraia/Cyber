@@ -1,0 +1,74 @@
+Sintassi di base di scp:
+scp [opzioni] origine destinazione
+
+1. Trasferire un file dal computer host alla macchina virtuale (o server remoto):
+Esempio:
+
+scp /path/to/local/file username@192.168.x.x:/path/to/destination/
+/path/to/local/file: Percorso completo al file locale da trasferire.
+username: Nome utente della macchina virtuale o del server remoto.
+192.168.x.x: Indirizzo IP della macchina virtuale.
+/path/to/destination/: Directory sulla macchina virtuale dove salvare il file.
+
+
+2. Trasferire un file dalla macchina virtuale al computer host:
+Esempio:
+scp username@192.168.x.x:/path/to/remote/file /path/to/local/destination/
+/path/to/remote/file: Percorso del file sulla macchina virtuale.
+/path/to/local/destination/: Directory sul computer host dove salvare il file.
+
+
+3. Trasferire intere directory:
+Puoi trasferire una directory completa usando l'opzione -r (ricorsiva).
+
+Dal computer host alla macchina virtuale:
+scp -r /path/to/local/directory username@192.168.x.x:/path/to/destination/
+
+Dalla macchina virtuale al computer host:
+scp -r username@192.168.x.x:/path/to/remote/directory /path/to/local/destination/
+
+
+4. Utilizzo con NAT e porta inoltrata:
+Se hai configurato una porta inoltrata su VirtualBox (es. 2222 per SSH), devi specificare la porta con l'opzione -P.
+
+Esempio di trasferimento file dal computer host alla macchina virtuale:
+scp -P 2222 /path/to/local/file username@localhost:/path/to/destination/
+
+Esempio di trasferimento file dalla macchina virtuale al computer host:
+scp -P 2222 username@localhost:/path/to/remote/file /path/to/local/destination/
+
+
+5. Aggiungere più file nello stesso comando:
+Puoi trasferire più file in un'unica operazione elencandoli uno dopo l'altro:
+
+scp file1.txt file2.txt username@192.168.x.x:/path/to/destination/
+
+
+6. Copia da una macchina remota a un'altra (passando dal computer host):
+Se hai accesso a due macchine remote, puoi trasferire file direttamente tra loro:
+
+scp username1@remote1:/path/to/file username2@remote2:/path/to/destination/
+
+
+7. Usare chiavi SSH per evitare la password:
+Per semplificare il trasferimento, puoi configurare l'accesso con chiavi SSH:
+
+Genera una chiave SSH sul computer host:
+ssh-keygen -t rsa
+
+Copia la chiave pubblica sulla macchina virtuale:
+ssh-copy-id -p 2222 username@localhost
+
+Dopo questa configurazione, scp e ssh non ti chiederanno più la password.
+Esempio pratico completo:
+Immagina di voler trasferire un file chiamato config.txt dal computer host a una macchina virtuale con:
+
+Utente: maverick
+IP: 192.168.1.100
+Destinazione: /home/maverick/configs/
+Il comando sarà:
+
+scp config.txt maverick@192.168.1.100:/home/maverick/configs/
+
+Se invece vuoi trasferire un'intera directory project/ alla stessa macchina:
+scp -r project/ maverick@192.168.1.100:/home/maverick/projects/

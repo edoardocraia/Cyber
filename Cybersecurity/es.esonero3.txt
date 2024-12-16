@@ -1,0 +1,82 @@
+Ice informa Maverick che dal comando centrale non riescono più a raggiungere il server web
+della TopGun.
+Maverick approfitta dell'occasione e decide di riconfigurare totalmente il firewall, andando a
+risolvere il problema e permettendo l'accesso al server solo via SSH o tramite il sito web (port
+80 TCP). Già che c'è, provvede anche a bloccare l'accesso al sito web della TopGun a un
+famoso prefisso di hacker, 193.204.161.0/24.
+Aiuta Maverick realizzando lo script che compie queste azioni.
+
+
+#!/bin/bash
+
+LOG_FILE="firewall_config.log"
+> $LOG_FILE
+
+echo "Inizio configurazione del firewall" | tee -a $LOG_FILE
+
+# 1. Pulisce tutte le regole esistenti
+echo -e "\n1. Pulizia regole esistenti:" | tee -a $LOG_FILE
+iptables -F
+iptables -X
+iptables -Z
+iptables -t nat -F
+iptables -t nat -X
+echo "Regole esistenti rimosse." | tee -a $LOG_FILE
+
+# 2. Imposta le politiche predefinite
+echo -e "\n2. Impostazione politiche predefinite:" | tee -a $LOG_FILE
+iptables -P INPUT DROP
+iptables -P FORWARD DROP
+iptables -P OUTPUT ACCEPT
+echo "Politiche predefinite impostate (INPUT e FORWARD: DROP, OUTPUT: ACCEPT)." | tee -a $LOG_FILE
+
+# 3. Permette il traffico locale (loopback)
+echo -e "\n3. Permette il traffico locale:" | tee -a $LOG_FILE
+iptables -A INPUT -i lo -j ACCEPT
+echo "Traffico locale consentito." | tee -a $LOG_FILE
+
+# 4. Permette connessioni già stabilite
+echo -e "\n4. Permette connessioni esistenti e traffico correlato:" | tee -a $LOG_FILE
+iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+echo "Connessioni esistenti e correlate consentite." | tee -a $LOG_FILE
+
+# 5. Permette l'accesso via SSH (porta 22)
+echo -e "\n5. Permette l'accesso via SSH (porta 22):" | tee -a $LOG_FILE
+iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+echo "Accesso SSH consentito." | tee -a $LOG_FILE
+
+# 6. Permette l'accesso al server web (porta 80)
+echo -e "\n6. Permette l'accesso al server web (porta 80):" | tee -a $LOG_FILE
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+echo "Accesso al server web consentito." | tee -a $LOG_FILE
+
+# 7. Blocca il prefisso IP 193.204.161.0/24 alla porta 80
+echo -e "\n7. Blocca il prefisso IP 193.204.161.0/24 sulla porta 80:" | tee -a $LOG_FILE
+iptables -A INPUT -s 193.204.161.0/24 -p tcp --dport 80 -j DROP
+echo "Blocco del prefisso IP 193.204.161.0/24 sulla porta 80 configurato." | tee -a $LOG_FILE
+
+# 8. Salva le regole per renderle persistenti
+echo -e "\n8. Salvataggio regole firewall:" | tee -a $LOG_FILE
+if command -v netfilter-persistent &> /dev/null; then
+    netfilter-persistent save
+    netfilter-persistent reload
+    echo "Regole salvate con netfilter-persistent." | tee -a $LOG_FILE
+elif command -v iptables-save &> /dev/null; then
+    iptables-save > /etc/iptables/rules.v4
+    echo "Regole salvate in /etc/iptables/rules.v4." | tee -a $LOG_FILE
+else
+    echo "Impossibile salvare automaticamente le regole. Salva manualmente con 'iptables-save'." | tee -a $LOG_FILE
+fi
+
+echo -e "\nConfigurazione completata. Dettagli salvati in $LOG_FILE."
+
+
+ESECUZIONE
+Salva il file come configura_firewall.sh.
+
+Rendi il file eseguibile:
+chmod +x configura_firewall.sh
+
+Esegui lo script come root:
+sudo ./configura_firewall.sh
+

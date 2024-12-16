@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Script per ricreare una configurazione di base del firewall
+echo "Inizio configurazione del firewall..."
+
+# 1. Resetta le regole esistenti
+iptables -F
+iptables -X
+iptables -Z
+
+# 2. Configura regole di base
+# Blocca tutto il traffico in entrata di default
+iptables -P INPUT DROP
+iptables -P FORWARD DROP
+iptables -P OUTPUT ACCEPT
+
+# Consenti connessioni esistenti e loopback
+iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+iptables -A INPUT -i lo -j ACCEPT
+
+# Abilita SSH
+iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+
+# 3. Salva la configurazione
+iptables-save > /etc/iptables/rules.v4
+
+echo "Configurazione completata. Firewall attivo con regole di base."

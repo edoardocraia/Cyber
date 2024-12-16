@@ -1,0 +1,111 @@
+Script Bash per ricreare la configurazione del firewall:
+
+#!/bin/bash
+
+LOG_FILE="firewall_reconfigure.log"
+> $LOG_FILE
+
+echo "Inizio ricreazione della configurazione del firewall" | tee -a $LOG_FILE
+
+# Verifica se firewalld o iptables è disponibile
+if command -v firewall-cmd >/dev/null 2>&1; then
+    FIREWALL="firewalld"
+    echo "Utilizzo firewalld per configurare il firewall." | tee -a $LOG_FILE
+elif command -v iptables >/dev/null 2>&1; then
+    FIREWALL="iptables"
+    echo "Utilizzo iptables per configurare il firewall." | tee -a $LOG_FILE
+else
+    echo "Errore: Nessun firewall supportato trovato (firewalld o iptables)." | tee -a $LOG_FILE
+    exit 1
+fi
+
+# Configurazione con firewalld
+if [ "$FIREWALL" = "firewalld" ]; then
+    echo -e "\n1. Resettare la configurazione del firewall" | tee -a $LOG_FILE
+    firewall-cmd --reload
+    firewall-cmd --permanent --new-zone=trusted
+    firewall-cmd --permanent --new-zone=blocked
+    firewall-cmd --reload
+
+    echo -e "\n2. Configurare regole di default" | tee -a $LOG_FILE
+    # Abilitare SSH
+    firewall-cmd --permanent --add-service=ssh
+    # Consentire il ping
+    firewall-cmd --permanent --add-icmp-block-inversion
+    # Bloccare tutte le altre porte di default
+    firewall-cmd --set-default-zone=block
+    firewall-cmd --reload
+
+    echo -e "\nConfigurazione completata con firewalld." | tee -a $LOG_FILE
+fi
+
+# Configurazione con iptables
+if [ "$FIREWALL" = "iptables" ]; then
+    echo -e "\n1. Resettare le regole esistenti" | tee -a $LOG_FILE
+    iptables -F
+    iptables -X
+    iptables -Z
+
+    echo -e "\n2. Configurare regole basilari" | tee -a $LOG_FILE
+    # Bloccare tutto il traffico in entrata di default
+    iptables -P INPUT DROP
+    iptables -P FORWARD DROP
+    iptables -P OUTPUT ACCEPT
+
+    # Consentire connessioni esistenti
+    iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+    # Abilitare SSH
+    iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+
+    # Consentire loopback
+    iptables -A INPUT -i lo -j ACCEPT
+
+    # Log delle connessioni bloccate
+    iptables -A INPUT -m limit --limit 5/min -j LOG --log-prefix "IPTables-Dropped: " --log-level 4
+
+    echo -e "\n3. Salvare le regole" | tee -a $LOG_FILE
+    if command -v netfilter-persistent >/dev/null 2>&1; then
+        netfilter-persistent save
+    elif command -v iptables-save >/dev/null 2>&1; then
+        iptables-save > /etc/iptables/rules.v4
+    fi
+
+    echo -e "\nConfigurazione completata con iptables." | tee -a $LOG_FILE
+fi
+
+echo -e "\nConfigurazione del firewall completata. Dettagli salvati in $LOG_FILE."
+
+
+Spiegazione dello script:
+Controllo firewall disponibile: Lo script verifica se utilizzare firewalld o iptables in base agli strumenti disponibili sul sistema.
+
+Configurazione con firewalld:
+Resetta tutte le configurazioni esistenti.
+
+Configura regole di base: consente SSH, abilita il ping, blocca tutte le altre porte.
+
+Configurazione con iptables:
+Resetta le regole esistenti.
+
+Configura regole per:
+Bloccare il traffico in entrata di default.
+Consentire connessioni esistenti (ESTABLISHED, RELATED).
+Abilitare SSH e loopback.
+Loggare connessioni bloccate.
+Salva la configurazione con iptables-save o netfilter-persistent.
+
+Output del log: I dettagli dell'esecuzione sono salvati in firewall_reconfigure.log.
+Come eseguire:
+
+Salva lo script in un file chiamato, ad esempio, reconfigure_firewall.sh.
+Rendi eseguibile lo script:
+chmod +x reconfigure_firewall.sh
+
+Esegui lo script come utente con privilegi di root:
+sudo ./reconfigure_firewall.sh
+
+Output atteso:
+Tutte le configurazioni precedenti del firewall saranno rimosse.
+Saranno impostate nuove regole basilari che proteggono il sistema.
+I dettagli delle operazioni saranno salvati nel file firewall_reconfigure.log.

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+USER="phoenix"
+id $USER
+grep -R "$USER" /etc/sudoers /etc/sudoers.d/
+
+usermod -G $(groups $USER | sed 's/ .*//') $USER
+sed -i "/$USER/d" /etc/sudoers
+for file in /etc/sudoers.d/*; do
+    sed -i "/$USER/d" "$file"
+done
+
+groupadd -f comandanti
+echo "%comandanti ALL=(ALL:ALL) ALL" >> /etc/sudoers
+
+gpasswd -d $USER sudo 2>/dev/null

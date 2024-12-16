@@ -1,0 +1,52 @@
+Guida passo-passo:
+
+1. Prerequisiti
+VS Code installato sul tuo computer.
+Estensione Remote - SSH installata (vedi passo successivo).
+Accesso SSH configurato alla macchina remota (puoi connetterti via terminale con ssh username@IP).
+
+2. Installare l'estensione "Remote - SSH"
+Apri VS Code.
+Vai nella sezione Extensions (icona dei quadrati sovrapposti sulla barra laterale o Ctrl+Shift+X).
+Cerca Remote - SSH.
+Installa l'estensione sviluppata da Microsoft.
+
+3. Configurare l'accesso SSH in VS Code
+Premi Ctrl+Shift+P (o vai su View > Command Palette).
+Digita Remote-SSH: Add New Host e seleziona l'opzione.
+Inserisci il comando SSH per accedere alla macchina remota. Ad esempio:
+
+ssh username@192.168.x.x
+
+Sostituisci username con il nome utente della macchina remota.
+Sostituisci 192.168.x.x con l'indirizzo IP della macchina remota.
+Scegli dove salvare questa configurazione (~/.ssh/config è il file predefinito).
+
+4. Connettersi alla macchina remota
+Premi di nuovo Ctrl+Shift+P e digita Remote-SSH: Connect to Host.
+Seleziona l'host configurato (ad esempio username@192.168.x.x).
+VS Code aprirà una nuova finestra e tenterà di connettersi alla macchina remota.
+
+5. Lavorare sulla macchina remota
+Una volta connesso, vedrai il file system della macchina remota nella Explorer View.
+Puoi aprire, modificare e salvare i file direttamente sulla macchina remota.
+Le estensioni necessarie (come Python o Node.js) verranno installate automaticamente sulla macchina remota, se richiesto.
+
+6. Configurazione avanzata (opzionale)
+Se utilizzi una porta personalizzata o chiavi SSH:
+
+Modifica il file ~/.ssh/config:
+Host my-remote-server
+    HostName 192.168.x.x
+    User username
+    Port 2222
+    IdentityFile ~/.ssh/id_rsa
+Connettiti usando il nome del host configurato (my-remote-server).
+
+7. Trasferire file tra host e macchina remota
+Puoi usare la sezione Explorer in VS Code per trascinare file tra il tuo computer e la macchina remota. Questo funziona come un client SSH grafico.
+
+8. Risoluzione problemi
+Errore chiave SSH: Assicurati che la chiave pubblica sia stata copiata correttamente sulla macchina remota (ssh-copy-id username@IP).
+Autenticazione fallita: Verifica le credenziali o il file ~/.ssh/config.
+Firewall: Controlla che la porta SSH (default 22) sia aperta sulla macchina remota.

@@ -1,0 +1,68 @@
+Ecco i comandi necessari per utilizzare una chiavetta USB su Linux tramite terminale:
+
+1. Collegare la chiavetta USB
+Inserisci la chiavetta USB nel computer.
+
+
+2. Identificare la chiavetta
+Per scoprire il dispositivo assegnato alla chiavetta, usa il comando:
+lsblk
+
+Questo elenca i dispositivi di archiviazione collegati. La chiavetta potrebbe apparire come /dev/sdX (esempio: /dev/sdb).
+
+In alternativa:
+sudo fdisk -l
+
+Mostra dettagli sui dispositivi di archiviazione, inclusi il tipo e le dimensioni. Cerca la chiavetta USB basandoti sulle dimensioni.
+
+
+3. Montare la chiavetta USB
+
+Crea una directory dove montare la chiavetta (se necessario):
+sudo mkdir /mnt/usb
+
+Monta il dispositivo (ad esempio, /dev/sdb1):
+sudo mount /dev/sdX1 /mnt/usb
+
+Sostituisci sdX1 con la partizione corretta della chiavetta (es. sdb1).
+
+Verifica che sia montata:
+df -h
+
+Dovresti vedere la chiavetta USB montata nella directory /mnt/usb.
+
+
+4. Accesso e utilizzo
+Accedi al contenuto della chiavetta:
+cd /mnt/usb
+ls
+
+Copia file nella chiavetta:
+cp file_da_copiare /mnt/usb/
+
+Copia file dalla chiavetta:
+cp /mnt/usb/file_destinazione ~/percorso_locale/
+
+
+5. Smontare la chiavetta
+Quando hai finito, smonta la chiavetta USB per evitare corruzioni dei dati:
+sudo umount /mnt/usb
+
+Verifica che non sia più montata:
+lsblk
+
+
+6. (Opzionale) Formattare la chiavetta
+Per formattare la chiavetta USB, prima smontala:
+sudo umount /dev/sdX1
+
+Formatta come FAT32 (adatto per la maggior parte dei sistemi):
+sudo mkfs.vfat /dev/sdX1
+O come ext4 (specifico per Linux):
+
+sudo mkfs.ext4 /dev/sdX1
+
+
+7. Rimuovere la chiavetta in sicurezza
+Dopo aver smontato la chiavetta, puoi rimuoverla in sicurezza dal sistema:
+sudo eject /dev/sdX

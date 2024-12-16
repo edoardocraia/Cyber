@@ -1,0 +1,13 @@
+#!/bin/bash
+
+grep 'sudo' /etc/group
+grep 'wheel' /etc/group
+awk -F: '$7 !~ /nologin/ && $2 !~ /^!/' /etc/passwd
+
+ls -l /etc/passwd /etc/shadow /etc/sudoers
+find /etc -type f \( -name "passwd" -o -name "shadow" -o -name "sudoers" \) -mtime -7 -ls
+
+last | head -10
+grep -i 'sudo' /var/log/auth.log | tail -20
+
+ps aux | grep -E "(sudo|root)" | grep -v "grep"

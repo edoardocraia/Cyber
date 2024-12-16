@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Analisi dei processi root
+ps aux | grep root
+
+# Verifica delle porte aperte
+ss -tuln
+
+# Ricerca di file SUID sospetti
+find / -perm -4000 2>/dev/null
+
+# Analisi dei cron job
+crontab -l 2>/dev/null
+cat /etc/crontab
+ls /etc/cron.*
+
+# Controllo delle configurazioni della shell
+cat ~/.bashrc
+cat ~/.profile

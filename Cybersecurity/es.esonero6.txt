@@ -1,0 +1,46 @@
+Maverick scopre che un file, usato per l'autenticazione, è stato trafugato da un utente
+malizioso, pur non avendo diritti amministrativi. Capendo il rischio che ciò comporta, agisce
+rapidamente eseguendo due azioni:
+• invalida le password di tutti gli utenti (obbligandoli a cambiare password al successivo
+login) e,
+• impedisce che il file possa trafugato ulteriormente.
+Scrivi lo script che ha eseguito Maverick per effettuare queste operazioni.
+
+
+
+#!/bin/bash
+
+# 1. Invalida le password di tutti gli utenti (forza il cambio al prossimo login)
+echo "Invalidating passwords for all users..."
+for user in $(awk -F: '{ if ($3 >= 1000 && $3 != 65534) print $1 }' /etc/passwd); do
+    passwd -e $user
+    echo "Password for user $user invalidated."
+done
+
+# 2. Proteggi il file d'autenticazione (modifica i permessi per renderlo accessibile solo a root)
+AUTH_FILE="/path/to/authentication/file"
+
+if [ -e "$AUTH_FILE" ]; then
+    echo "Securing the authentication file: $AUTH_FILE"
+    chown root:root "$AUTH_FILE"
+    chmod 600 "$AUTH_FILE"
+    echo "File $AUTH_FILE is now secured."
+else
+    echo "Error: Authentication file $AUTH_FILE not found!"
+    exit 1
+fi
+
+# 3. (Facoltativo) Configura audit per monitorare accessi al file d'autenticazione
+echo "Configuring audit rules for $AUTH_FILE"
+auditctl -w "$AUTH_FILE" -p rwa -k auth_file_access
+echo "Audit rule configured to monitor access to $AUTH_FILE."
+
+echo "Operations completed. All users must change their passwords at next login."
+
+
+
+ESECUZIONE
+
+Lancia lo script come utente root:
+sudo ./maverick_fix.sh
+

@@ -1,0 +1,75 @@
+Phoenix scopre per caso la possibilità di eseguire comandi privilegiati dal suo utente. Ma
+Phoenix è consapevole di non essere un Comandante e quindi di non avere accesso
+amministrativo al server della Top Gun. Segnala immediatamente il problema a Maverick.
+Purtroppo, Maverick è su un giro di ricognizione con il suo caccia e non riesce a intervenire
+prima che uno zoo abbia invaso il sistema.
+Per evitare ulteriori problemi, incarica te di sistemare il problema e limitare l'accesso
+amministrativo solo agli utenti che sono nel gruppo comandanti.
+
+
+#!/bin/bash
+
+LOG_FILE="sistemazione_privilegi.log"
+> $LOG_FILE
+
+echo "Inizio della procedura di sistemazione privilegi" | tee -a $LOG_FILE
+
+# 1. Verifica i privilegi di Phoenix
+echo -e "\n1. Verifica privilegi di Phoenix:" | tee -a $LOG_FILE
+USER="phoenix"
+id $USER | tee -a $LOG_FILE
+
+# Controlla se Phoenix è in /etc/sudoers o file correlati
+echo -e "\nControllo file sudoers per Phoenix:" | tee -a $LOG_FILE
+grep -R "$USER" /etc/sudoers /etc/sudoers.d/ | tee -a $LOG_FILE
+
+# 2. Rimuovi i privilegi non autorizzati
+echo -e "\n2. Rimozione privilegi non autorizzati:" | tee -a $LOG_FILE
+# Rimuovi Phoenix dai gruppi con accesso amministrativo
+usermod -G $(groups $USER | sed 's/ .*//') $USER | tee -a $LOG_FILE
+
+# Rimuovi riferimenti diretti a Phoenix in /etc/sudoers e correlati
+sed -i "/$USER/d" /etc/sudoers
+for file in /etc/sudoers.d/*; do
+    sed -i "/$USER/d" "$file"
+done
+echo "Privilegi non autorizzati rimossi." | tee -a $LOG_FILE
+
+# 3. Configura il gruppo comandanti per privilegi sudo
+echo -e "\n3. Configurazione accesso per il gruppo 'comandanti':" | tee -a $LOG_FILE
+GROUP="comandanti"
+
+# Verifica se il gruppo esiste, altrimenti crealo
+if ! grep -q "^$GROUP:" /etc/group; then
+    groupadd $GROUP
+    echo "Gruppo '$GROUP' creato." | tee -a $LOG_FILE
+fi
+
+# Configura sudo per il gruppo 'comandanti'
+if ! grep -q "^%$GROUP ALL=(ALL:ALL) ALL" /etc/sudoers; then
+    echo "%$GROUP ALL=(ALL:ALL) ALL" >> /etc/sudoers
+    echo "Accesso amministrativo configurato per il gruppo '$GROUP'." | tee -a $LOG_FILE
+fi
+
+# 4. Test accesso
+echo -e "\n4. Test accesso amministrativo:" | tee -a $LOG_FILE
+echo "Gli utenti nel gruppo '$GROUP' possono ora eseguire comandi privilegiati." | tee -a $LOG_FILE
+
+# 5. Rimuovi Phoenix dal gruppo sudo se necessario
+if id $USER | grep -q "sudo"; then
+    gpasswd -d $USER sudo
+    echo "Phoenix rimosso dal gruppo sudo." | tee -a $LOG_FILE
+fi
+
+echo -e "\nProcedura completata. Dettagli salvati in $LOG_FILE"
+
+
+
+ESECUZIONE
+Salva lo script come sistemazione_privilegi.sh.
+
+Rendi lo script eseguibile:
+chmod +x sistemazione_privilegi.sh
+
+Eseguilo come root:
+sudo ./sistemazione_privilegi.sh

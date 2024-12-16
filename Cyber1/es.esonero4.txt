@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Limita gli accessi concorrenti
+LIMITS_FILE="/etc/security/limits.conf"
+echo "* - maxlogins 1" >> $LIMITS_FILE
+
+echo "session    required     pam_limits.so" >> /etc/pam.d/sshd
+
+# Blocca l'accesso SSH a Lorenzo
+echo "DenyUsers lorenzo" >> /etc/ssh/sshd_config
+
+# Riavvia il servizio SSH
+systemctl restart sshd

@@ -1,0 +1,61 @@
+Passaggi per connetterti alla macchina virtuale via SSH:
+Verifica che il server SSH sia attivo sulla macchina virtuale:
+
+Accedi alla macchina virtuale.
+
+Assicurati che il server SSH sia installato e avviato:
+
+bash
+Copia codice
+sudo apt update
+sudo apt install openssh-server
+sudo systemctl enable ssh
+sudo systemctl start ssh
+Controlla lo stato del servizio:
+
+bash
+Copia codice
+sudo systemctl status ssh
+Trova l'indirizzo IP della macchina virtuale:
+
+Usa il comando seguente sulla macchina virtuale:
+bash
+Copia codice
+ip a
+Identifica l'indirizzo IP associato all'interfaccia di rete (es. 192.168.x.x).
+Configura la rete della macchina virtuale in VirtualBox:
+
+Vai alle impostazioni di rete della macchina virtuale in VirtualBox.
+
+Scegli la modalità di rete adatta:
+
+Bridged Adapter: Consente alla macchina virtuale di ottenere un IP sulla stessa rete locale del computer host. È la scelta ideale se vuoi connetterti via SSH.
+NAT con porta inoltrata: Se vuoi connetterti via SSH ma non vuoi cambiare la configurazione della rete, configura il port forwarding (esempio: porta host 2222 inoltrata alla porta guest 22).
+Per configurare il port forwarding:
+
+Vai su Settings > Network > Advanced > Port Forwarding.
+Aggiungi una regola:
+Host Port: 2222
+Guest Port: 22
+Accedi via SSH dal computer fisico:
+
+Apri il terminale sul computer fisico e connettiti alla macchina virtuale:
+Se usi il Bridged Adapter:
+
+bash
+Copia codice
+ssh username@192.168.x.x
+Sostituisci username con il tuo utente e 192.168.x.x con l'IP della macchina virtuale.
+
+Se hai configurato il NAT con porta inoltrata:
+
+bash
+Copia codice
+ssh -p 2222 username@localhost
+Vantaggi di usare SSH:
+Copia e incolla: Puoi copiare e incollare tra il terminale e il sistema host.
+Accesso remoto: Non hai bisogno di interagire direttamente con VirtualBox.
+File transfer: Puoi trasferire file tra host e macchina virtuale con scp:
+bash
+Copia codice
+scp /path/to/file username@192.168.x.x:/path/destination

